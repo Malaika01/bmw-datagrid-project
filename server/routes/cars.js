@@ -315,17 +315,17 @@ router.delete('/:id', (req, res) => {
     const query = "DELETE FROM cars WHERE id = ?";
 
     db.query(query, [id], (err, result) => {
-        if (err){
+        if (err) {
             return res.status(500).json({ error: err.message });
         }
 
         if (result.affectedRows === 0) {
-            return res.status(404).json({ message: "Car with ID ${id} not found" });
-        }
-        else {  
+            // FIXED: Used backticks (`) for string interpolation
+            return res.status(404).json({ message: `Car with ID ${id} not found` });
+        } else {  
+            // FIXED: Used backticks (`) for string interpolation
             res.status(200).json({ message: `Car with ID ${id} deleted successfully.` });
         }
-
     });
 });
 
