@@ -18,7 +18,6 @@ db.connect(err => {
     }
     console.log('Connected to the MySQL database.');
 });
-
 /**
  * @swagger
  * /:
@@ -61,13 +60,13 @@ db.connect(err => {
  *                 type: number
  *               Date:
  *                 type: string
- *    responses:
- *    201:
- *     description: Car added successfully
- *    400:
- *     description: Bad request 
- *    500:
- *     description: Server error
+ *     responses:
+ *       201:
+ *         description: Car added successfully
+ *       400:
+ *         description: Bad request
+ *       500:
+ *         description: Server error
  */
 router.post('/', (req, res) => {
     const { 

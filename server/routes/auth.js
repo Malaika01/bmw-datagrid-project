@@ -30,13 +30,13 @@ const db = mysql.createConnection({
  *                 type: string
  *               password:
  *                 type: string
- *    responses:
- *    201:
- *     description: User registered successfully
- *    400:
- *     description: Bad request
- *    500:
- *     description: Server error
+ *     responses:
+ *       201:
+ *         description: User registered successfully
+ *       400:
+ *         description: Bad request
+ *       500:
+ *         description: Server error
  */
 router.post('/register', async (req, res) => {
     const { username, password } = req.body; 
@@ -78,56 +78,66 @@ router.post('/register', async (req, res) => {
  *                 type: string
  *               password:
  *                 type: string
- *    responses:
- *    201:
- *     description: User logged in successfully
- *    400:
- *     description: Bad request 
- *    500:
- *     description: Server error
+ *     responses:
+ *       201:
+ *         description: User logged in successfully
+ *       400:
+ *         description: Bad request 
+ *       500:
+ *         description: Server error
  */
 const rateLimit = require('express-rate-limit');
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 5 
 });
-router.post('/login', loginLimiter, (req, res) => {
-    const { username, password } = req.body;
-    if (!username || !password) {
-        return res.status(400).json("Username and password are required");
-    }
-    try {
-        const [results] = await db.promise().query("SELECT * FROM users WHERE username = ?", [username]);{
-        
-        const user = results[0];
-        const validPW = await bcrypt.compare(password, user.password);
-        
-        if (!validPW){
-            return res.status(401).json("Invalid username or password");
-        }
+router.post('/login', loginLimiter, async (req, res) => {
+  const { username, password } = req.body;
 
-        //Check if role is valid before signing token
-        if (!user.role || !['user', 'admin'].includes(user.role)) {
-            return res.status(500).json("Invalid user role");
-        }
-        const token = jwt.sign(
-            { id: user.id, role: user.role, username: user.username }, 
-            SECRET_KEY, 
-            { expiresIn: '1h' }
-        );
-        
+  if (!username || !password) {
+    return res.status(400).json("Username and password are required");
+  }
 
-        res.json({ 
-            token, 
-            role: user.role, 
-            username: user.username 
-        });
+  try {
+    const [results] = await db.promise().query(
+      "SELECT * FROM users WHERE username = ?",
+      [username]
+    );
+
+    if (results.length === 0) {
+      return res.status(401).json("Invalid username or password");
     }
-        } catch (error) {
-                res.status(500).json("Server error during login")
-        }; 
+
+    const user = results[0];
+
+    const validPW = await bcrypt.compare(password, user.password);
+
+    if (!validPW) {
+      return res.status(401).json("Invalid username or password");
+    }
+
+    // Validate role
+    if (!user.role || !['user', 'admin'].includes(user.role)) {
+      return res.status(500).json("Invalid user role");
+    }
+
+    const token = jwt.sign(
+      { id: user.id, role: user.role, username: user.username },
+      SECRET_KEY,
+      { expiresIn: '1h' }
+    );
+
+    res.json({
+      token,
+      role: user.role,
+      username: user.username
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json("Server error during login");
+  }
 });
-
 /**
  * @swagger
  * /google-login:
@@ -144,13 +154,13 @@ router.post('/login', loginLimiter, (req, res) => {
  *                 type: string
  *               password:
  *                 type: string
- *    responses:
- *    201:
- *     description: User logged in successfully
- *    400:
- *     description: Bad request 
- *    500:
- *     description: Server error
+ *     responses:
+ *       201:
+ *         description: User logged in successfully
+ *       400:
+ *         description: Bad request 
+ *       500:
+ *         description: Server error
  */
 router.post('/google-login', async (req, res) => {
     const { token } = req.body;
